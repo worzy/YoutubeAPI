@@ -13,7 +13,40 @@ use Validator;
 class VideoController extends ApiController
 {
 
-    
+    /**
+     * Fetch and store data from API based on filter file
+     */
+    public function storeFilter(Channel $channel, Video $video, Youtube $youtube)
+    {
+        // Get Channel names as array
+        $allChannelsArr = $channel->all()->pluck('channel_name')->toArray();
+        
+        $filterArr = explode(PHP_EOL, Storage::get('search_filter'));
+
+        // Get videos with filter applied
+        $youtubeVideos = $youtube->findChannelVideos($allChannelsArr, $filterArr);
+
+        foreach ($youtubeVideos as $video) {
+
+            // Validate that data is correct and unique
+            $validator = Validator::make([
+                'title' => $video->snippet->title,
+                'date' => Carbon::parse($video->snippet->publishedAt)
+            ], [
+                'title' => 'required|unique:videos|max:100',
+                'date' => 'required|date',
+            ]);
+
+            if (!$validator->fails()) {
+                Video::create([
+                    'title' => $video->snippet->title,
+                    'date' => Carbon::parse($video->snippet->publishedAt),
+                ]);
+            }
+        }
+
+        return $this->respondSuccess();
+    }
 
     /**
      * Return a listing of the resource
