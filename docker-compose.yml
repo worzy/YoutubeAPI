@@ -1,0 +1,62 @@
+version: '3'
+services:
+    apache:
+        container_name: youtubeapi_apache
+        image: webdevops/apache:ubuntu-16.04
+        environment:
+            WEB_DOCUMENT_ROOT: /var/www/public
+            WEB_ALIAS_DOMAIN: youtubeapi.localhost
+            WEB_PHP_SOCKET: php-fpm:9000
+        volumes: # Only shared dirs to apache (to be served)
+            - ./public:/var/www/public
+            - ./storage:/var/www/storage
+        networks:
+            - youtubeapi-network
+        ports:
+            - "80:80"
+            - "443:443"
+    php-fpm:
+        container_name: youtubeapi_php
+        image: cyberduck/php-fpm-laravel:7.2
+        volumes:
+            - ./:/var/www/
+            - ./ci:/var/www/ci:cached
+            - ./vendor:/var/www/vendor:delegated
+            - ./storage:/var/www/storage:delegated
+            - ./node_modules:/var/www/node_modules:cached
+            - ~/.ssh:/root/.ssh:cached
+            - ~/.composer/cache:/root/.composer/cache:delegated
+        networks:
+            - youtubeapi-network
+    db:
+        container_name: youtubeapi_db
+        image: mariadb:10.1
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: youtubeapi
+            MYSQL_USER: youtubeapi
+            MYSQL_PASSWORD: secret
+        volumes:
+            - db_data:/var/lib/mysql
+        networks:
+            - youtubeapi-network
+        ports:
+            - "33060:3306"
+    redis:
+        container_name: youtubeapi_redis
+        image: redis:2.8.22
+        networks:
+            - youtubeapi-network
+        ports:
+            - "6379:6379"
+    selenium:
+        container_name: youtubeapi_selenium
+        image: selenium/standalone-chrome
+        networks:
+            - youtubeapi-network
+networks:
+    youtubeapi-network:
+        driver: "bridge"
+volumes:
+    db_data:
+        driver: "local"
