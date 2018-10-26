@@ -42,18 +42,6 @@ services:
             - youtubeapi-network
         ports:
             - "33060:3306"
-    redis:
-        container_name: youtubeapi_redis
-        image: redis:2.8.22
-        networks:
-            - youtubeapi-network
-        ports:
-            - "6379:6379"
-    selenium:
-        container_name: youtubeapi_selenium
-        image: selenium/standalone-chrome
-        networks:
-            - youtubeapi-network
 networks:
     youtubeapi-network:
         driver: "bridge"
